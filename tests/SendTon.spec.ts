@@ -1,5 +1,5 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { toNano } from '@ton/core';
+import { fromNano, toNano } from '@ton/core';
 import { SendTon } from '../wrappers/SendTon';
 import '@ton/test-utils';
 
@@ -18,12 +18,12 @@ describe('SendTon', () => {
         const deployResult = await sendTon.send(
             deployer.getSender(),
             {
-                value: toNano('0.05'),
+                value: toNano('1'),
             },
             {
                 $$type: 'Deploy',
                 queryId: 0n,
-            }
+            },
         );
 
         expect(deployResult.transactions).toHaveTransaction({
@@ -32,10 +32,28 @@ describe('SendTon', () => {
             deploy: true,
             success: true,
         });
+
+        await sendTon.send(deployer.getSender(), { value: toNano('500') }, null);
     });
 
-    it('should deploy', async () => {
-        // the check is done inside beforeEach
-        // blockchain and sendTon are ready to use
+    it('should deploy and receive ton', async () => {
+        const balance = await sendTon.getBalance();
+    });
+
+    it('should withdraw all', async () => {
+        const user = await blockchain.treasury('user');
+        const balanceBeforeUser = await user.getBalance();
+
+        await sendTon.send(user.getSender(), { value: toNano('1') }, 'withdraw_all');
+
+        const blanceAfterUser = await user.getBalance();
+
+        expect(balanceBeforeUser).toBeGreaterThanOrEqual(blanceAfterUser);
+
+        const balanceBeforeDeployer = await deployer.getBalance();
+        await sendTon.send(deployer.getSender(), { value: toNano('1') }, 'withdraw_all');
+        const balanceAfterDeployer = await deployer.getBalance();
+
+        expect(balanceAfterDeployer).toBeGreaterThan(balanceBeforeDeployer)
     });
 });
