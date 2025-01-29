@@ -1,7 +1,9 @@
 import "@stdlib/deploy";
 
 contract SendTon with Deployable {
+    const MainTonForStorage: Int = ton("0.01");
     owner: Address;
+
     init(){
         self.owner = sender();
     }
@@ -22,7 +24,18 @@ contract SendTon with Deployable {
         );
     }
 
-    get fun balance(): String {
-        return myBalance().toCoinsString();
+    receive("withdraw safe"){   
+        require(sender() == self.owner, "only owner is allowed to withdraw");
+
+        send(SendParameters{
+            to: sender(),
+            bounce: true,
+            value: myBalance() - context().value - self.MainTonForStorage,
+            mode: SendIgnoreErrors + SendRemainingValue,
+        })
+    }
+
+    get fun balance():Int {
+        return myBalance();
     }
 }
