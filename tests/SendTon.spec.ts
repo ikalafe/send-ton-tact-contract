@@ -51,9 +51,31 @@ describe('SendTon', () => {
         expect(balanceBeforeUser).toBeGreaterThanOrEqual(blanceAfterUser);
 
         const balanceBeforeDeployer = await deployer.getBalance();
-        await sendTon.send(deployer.getSender(), { value: toNano('1') }, 'withdraw_all');
+        await sendTon.send(deployer.getSender(), { value: toNano('0.1') }, 'withdraw_all');
         const balanceAfterDeployer = await deployer.getBalance();
 
-        expect(balanceAfterDeployer).toBeGreaterThan(balanceBeforeDeployer)
+        expect(balanceAfterDeployer).toBeGreaterThan(balanceBeforeDeployer);
+    });
+
+    it('should withdraw safe', async () => {
+        const user = await blockchain.treasury('user');
+        const balanceBeforeUser = await user.getBalance();
+
+        await sendTon.send(user.getSender(), { value: toNano('0.01') }, 'withdraw safe');
+
+        const blanceAfterUser = await user.getBalance();
+
+        expect(balanceBeforeUser).toBeGreaterThanOrEqual(blanceAfterUser);
+
+        const balanceBeforeDeployer = await deployer.getBalance();
+        await sendTon.send(deployer.getSender(), { value: toNano('0.01') }, 'withdraw safe');
+        const balanceAfterDeployer = await deployer.getBalance();
+
+        expect(balanceAfterDeployer).toBeGreaterThan(balanceBeforeDeployer);
+
+        const contractBalance = await sendTon.getBalance();
+        console.log(fromNano(contractBalance));
+
+        expect(contractBalance).toBeGreaterThan(0n);
     });
 });
