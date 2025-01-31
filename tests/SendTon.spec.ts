@@ -1,6 +1,6 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { fromNano, toNano } from '@ton/core';
-import { SendTon } from '../wrappers/SendTon';
+import { SendTon, Withdraw } from '../wrappers/SendTon';
 import '@ton/test-utils';
 
 describe('SendTon', () => {
@@ -76,6 +76,40 @@ describe('SendTon', () => {
         const contractBalance = await sendTon.getBalance();
         console.log(fromNano(contractBalance));
 
+        expect(contractBalance).toBeGreaterThan(0n);
+    });
+
+    it('should withdraw message', async () => {
+        const message: Withdraw = {
+            $$type: 'Withdraw',
+            amount: toNano('150'),
+        };
+
+        const user = await blockchain.treasury('user');
+        const balanceBeforeUser = await user.getBalance();
+        await sendTon.send(
+            user.getSender(),
+            {
+                value: toNano('0.2'),
+            },
+            message,
+        );
+        const balanceAfterUser = await user.getBalance();
+        expect(balanceBeforeUser).toBeGreaterThanOrEqual(balanceAfterUser);
+
+        const balanceBeforeDeployer = await deployer.getBalance();
+        await sendTon.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.2'),
+            },
+            message,
+        );
+
+        const balanceAfterDeployer = await deployer.getBalance();
+        expect(balanceBeforeDeployer + toNano("150")).toBeGreaterThanOrEqual(balanceAfterDeployer);
+
+        const contractBalance = await sendTon.getBalance();
         expect(contractBalance).toBeGreaterThan(0n);
     });
 });
