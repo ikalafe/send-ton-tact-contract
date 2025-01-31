@@ -74,7 +74,6 @@ describe('SendTon', () => {
         expect(balanceAfterDeployer).toBeGreaterThan(balanceBeforeDeployer);
 
         const contractBalance = await sendTon.getBalance();
-        console.log(fromNano(contractBalance));
 
         expect(contractBalance).toBeGreaterThan(0n);
     });
